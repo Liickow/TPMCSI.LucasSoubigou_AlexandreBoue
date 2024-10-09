@@ -23,11 +23,11 @@ def dump(address, *values):
 
 
 def callbackX(*x):
-    if(x[0] > 0.20) :
+    if(x[0] > 8) :
         data = b'P_ACCELERATE'
         client_socket.sendto(data, address)
 
-    elif (x[0] < -0.40) :
+    elif (x[0] < -8) :
         data = b'P_BRAKE'
         client_socket.sendto(data, address)
     else:
@@ -38,10 +38,10 @@ def callbackX(*x):
     
 
 def callbackY(*y):
-    if(y[0] > 0.20) :
+    if(y[0] > 15) :
         data = b'P_RIGHT'
         client_socket.sendto(data, address)
-    elif (y[0] < -0.20) :
+    elif (y[0] < -15) :
         data = b'P_LEFT'
         client_socket.sendto(data, address)
     else :
@@ -67,8 +67,8 @@ osc = OSCThreadServer(default_handler=dump)  # See sources for all the arguments
 # You can also use an \*nix socket path here
 sock = osc.listen(address='0.0.0.0', port=8000, default=True)
 
-osc.bind(b'/multisense/gyroscope/x', callbackX)
-osc.bind(b'/multisense/gyroscope/y', callbackY)
+osc.bind(b'/multisense/orientation/pitch', callbackX)
+osc.bind(b'/multisense/orientation/roll', callbackY)
 osc.bind(b'/multisense/pad/touchUP', callbackTouch)
 
 sleep(1000)

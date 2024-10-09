@@ -1,8 +1,7 @@
 from oscpy.server import OSCThreadServer
-import time
 import socket
 import sys
-import select
+import time
 
 address = ('localhost', 6006)
 client_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -21,49 +20,49 @@ def dump(address, *values):
     ))
 
 
+global accel
+global brake
+global left
+global right
+right = 0
+
 def callbackX(*x):
     if(x[0] > 0.20) :
-        data = b'R_BRAKE'
-        client_socket.sendto(data, address)
         data = b'P_ACCELERATE'
         client_socket.sendto(data, address)
 
-    elif (x[0] < -0.60) :
+    elif (x[0] < -0.40) :
+        data = b'P_BRAKE'
+        client_socket.sendto(data, address)
+    else:
         data = b'R_ACCELERATE'
         client_socket.sendto(data, address)
-        data = b'P_BRAKE'
+        data = b'R_BRAKE'
         client_socket.sendto(data, address)
     
 
 def callbackY(*y):
     if(y[0] > 0.20) :
-        data = b'P_RIGHT'
-        client_socket.sendto(data, address)
+        right = y[0]
     elif (y[0] < -0.20) :
-        data = b'P_LEFT'
-        client_socket.sendto(data, address)
-
-def callbackShake(*shake):
-    if(shake[0] > 0.5 or shake[0] > -0.5) :
-            data = b'P_RESCUE'
-            client_socket.sendto(data, address)
-            time.sleep(0.1)
-            data = b'R_RESCUE'
-            client_socket.sendto(data, address)
+        right = y[0]
+    else :
+        right = 0
 
 def callbackTouch(*touch):
     timeStart = time.time()
     if touch :
         if(timeStart - time.time() < 1) :
-            data = b'P_FIRE'
-            client_socket.sendto(data, address)
-            time.sleep(0.2)
-            data = b'R_FIRE'
+            data = b'FIRE'
             client_socket.sendto(data, address)
 
         data = b'R_RIGHT'
         client_socket.sendto(data, address)
         data = b'R_LEFT'
+        client_socket.sendto(data, address)
+        data = b'R_ACCELERATE'
+        client_socket.sendto(data, address)
+        data = b'R_BRAKE'
         client_socket.sendto(data, address)
         timeStart = time.time()
 
@@ -75,8 +74,35 @@ sock = osc.listen(address='0.0.0.0', port=8000, default=True)
 
 osc.bind(b'/multisense/pad/x', callbackX)
 osc.bind(b'/multisense/pad/y', callbackY)
-osc.bind(b'/multisense/gyroscope/x', callbackShake)
 osc.bind(b'/multisense/pad/touchUP', callbackTouch)
 
-time.sleep(1000)
+while True:
+
+    if(left):
+        data = b'P_LEFT'
+        client_socket.sendto(data, address)
+    else:
+        data = b'R_LEFT'
+        client_socket.sendto(data, address)
+    if(right):
+        data = b'P_RIGHT'
+        client_socket.sendto(data, address)
+    else:
+        data = b'R_RIGHT'
+        client_socket.sendto(data, address)
+    if(accel):
+        data = b'P_ACCELERATE'
+        client_socket.sendto(data, address)
+    else:
+        data = b'R_ACCELEARTE'
+        client_socket.sendto(data, address)
+    if(brake):
+        data = b'P_BRAKE'
+        client_socket.sendto(data, address)
+    else:
+        data = b'R_BRAKE'
+        client_socket.sendto(data, address)
+
+
+    time.sleep(0.016)
 osc.stop()  # Stop the default socket
